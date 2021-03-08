@@ -22,7 +22,7 @@ class InvalidCharactersInNameChecker(VisitorChecker):
     }
 
     def __init__(self, *args):
-        self.invalid_chars = ('.', '?')
+        self.invalid_chars = {'.', '?'}
         self.node_names_map = {
             'KEYWORD_NAME': 'keyword',
             'TESTCASE_NAME': 'test case',
@@ -34,21 +34,17 @@ class InvalidCharactersInNameChecker(VisitorChecker):
         suite_name = Path(node.source).stem
         if '__init__' in suite_name:
             suite_name = Path(node.source).parent.name
-        self.check_if_char_in_name(node, suite_name, 'SUITE')
+        self.check_if_char_in_node_name(node, 'SUITE', suite_name)
         super().visit_File(node)
 
-    def check_if_char_in_node_name(self, node, name_of_node):
-        for index, char in enumerate(node.name):
+    def check_if_char_in_node_name(self, node, node_type, name=None):
+        if name is None:
+            name = node.name
+        for index, char in enumerate(name):
             if char in self.invalid_chars:
-                self.report("invalid-char-in-name", char, self.node_names_map[name_of_node],
+                self.report("invalid-char-in-name", char, self.node_names_map[node_type],
                             node=node,
                             col=node.col_offset + index + 1)
-
-    def check_if_char_in_name(self, node, name, node_type):
-        for char in self.invalid_chars:
-            if char in name:
-                self.report("invalid-char-in-name", char, self.node_names_map[node_type],
-                            node=node)
 
     def visit_TestCaseName(self, node):  # noqa
         self.check_if_char_in_node_name(node, 'TESTCASE_NAME')

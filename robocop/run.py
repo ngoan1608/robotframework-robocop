@@ -6,13 +6,22 @@ import sys
 import os
 from pathlib import Path
 
-from robot.api import get_model
+from robot.api import get_resource_model
 
 import robocop.exceptions
 from robocop import checkers
 from robocop import reports
 from robocop.config import Config
 from robocop.utils import DisablersFinder, FileType, FileTypeChecker
+from timeit import default_timer as timer
+from contextlib import contextmanager
+
+
+@contextmanager
+def time_section(msg):
+    old = timer()
+    yield
+    print(msg + f'{timer() - old:.3f}s')
 
 
 class Robocop:
@@ -68,11 +77,14 @@ class Robocop:
 
     def run(self):
         """ Entry point for running scans """
-        self.reload_config()
-
-        self.recognize_file_types()
-        self.run_checks()
-        self.make_reports()
+        with time_section('Reload config: '):
+            self.reload_config()
+        with time_section('Recognize file types: '):
+            self.recognize_file_types()
+        with time_section('Run checks: '):
+            self.run_checks()
+        with time_section('Make reports: '):
+            self.make_reports()
         if self.config.output and not self.out.closed:
             self.out.close()
         if self.from_cli:
@@ -88,36 +100,50 @@ class Robocop:
         These types are important since they are used to define parsing class for robot API.
         """
         files = self.config.paths
+        file_type_checker = FileTypeChecker(self.config.exec_dir)
         for file in self.get_files(files, self.config.recursive):
             if '__init__' in file.name:
-                self.files[file] = FileType.INIT
+                file_type = FileType.INIT
             elif file.suffix.lower() == '.resource':
-                self.files[file] = FileType.RESOURCE
+                file_type = FileType.RESOURCE
             else:
-                self.files[file] = FileType.GENERAL
-        file_type_checker = FileTypeChecker(self.files, self.config.exec_dir)
-        for file in self.files:
+                file_type = FileType.GENERAL
             file_type_checker.source = file
-            model = get_model(file)
+            model = file_type.get_parser()(str(file))
             file_type_checker.visit(model)
+            self.files[file] = (file_type, model)
+
+        for resource in file_type_checker.resource_files:
+            if resource not in self.files:
+                continue
+            if self.files[resource][0].value != FileType.RESOURCE:
+                self.files[resource] = (FileType.RESOURCE, get_resource_model(str(resource)))
 
     def run_checks(self):
+        disablers = 0.0
         for file in self.files:
             found_issues = []
+            elapsed = timer()
             self.register_disablers(file)
+            disablers += timer() - elapsed
             if self.disabler.file_disabled:
                 continue
-            model = self.files[file].get_parser()(str(file))
+            model = self.files[file][1]
             for checker in self.checkers:
+                if 'checkers_performance' in self.reports:
+                    self.reports['checkers_performance'].start_timer()
                 if checker.disabled:
                     continue
                 checker.source = str(file)
                 checker.scan_file(model)
+                if 'checkers_performance' in self.reports:
+                    self.reports['checkers_performance'].stop_timer(checker.__class__.__name__)
                 found_issues += checker.issues
                 checker.issues.clear()
             found_issues.sort()
             for issue in found_issues:
                 self.report(issue)
+        print(f'Disablers took {disablers:.3f}s')
 
     def register_disablers(self, file):
         """ Parse content of file to find any disabler statements like # robocop: disable=rulename """
@@ -259,4 +285,5 @@ class Robocop:
 
 def run_robocop():
     linter = Robocop(from_cli=True)
-    linter.run()
+    with time_section('Whole run: '):
+        linter.run()

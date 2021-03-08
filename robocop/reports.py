@@ -161,3 +161,29 @@ class JsonReport(Report):
 
     def get_report(self):
         return None
+
+
+class CheckersPerformance(Report):
+    def __init__(self):
+        self.name = 'checkers_performance'
+        self.description = ''
+        self.current_timer = 0
+        self.checkers = defaultdict(float)
+
+    def start_timer(self):
+        self.current_timer = timer()
+
+    def stop_timer(self, checker):
+        diff = timer() - self.current_timer
+        self.checkers[checker] += diff
+
+    def add_message(self, message):
+        pass
+
+    def get_report(self):
+        sorted_elapsed = sorted(self.checkers.items(), key=itemgetter(1), reverse=True)
+        s = '\nTime passed by checkers: \n    '
+        s += '\n    '.join(f'{elapsed[0]} {elapsed[1]:.3f}s' for elapsed in sorted_elapsed)
+        total_elapsed = sum(elapsed[1] for elapsed in sorted_elapsed)
+        s += f'\nCheckers took {total_elapsed:.3f}s in total'
+        return s
