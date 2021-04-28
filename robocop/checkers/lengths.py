@@ -4,7 +4,7 @@ Lengths checkers
 import re
 
 from robot.parsing.model.blocks import CommentSection
-from robot.parsing.model.statements import KeywordCall, Comment, EmptyLine, Arguments
+from robot.parsing.model.statements import KeywordCall, Comment, EmptyLine, Arguments, Variable
 
 from robocop.checkers import VisitorChecker, RawFileChecker
 from robocop.rules import RuleSeverity
@@ -365,6 +365,11 @@ class EmptySettingsChecker(VisitorChecker):
             "empty-arguments",
             "Arguments are empty",
             RuleSeverity.ERROR
+        ),
+        "0527": (
+            "empty-variable-value",
+            "Variable without value. Use ${EMPTY} instead",
+            RuleSeverity.WARNING
         )
     }
 
@@ -431,3 +436,10 @@ class EmptySettingsChecker(VisitorChecker):
     def visit_Arguments(self, node):  # noqa
         if not node.values:
             self.report("empty-arguments", node=node, col=node.end_col_offset + 1)
+
+    def visit_VariableSection(self, node):  # noqa
+        for child in node.body:
+            if not isinstance(child, Variable) or getattr(child, 'errors', None) or getattr(child, 'error', None):
+                continue
+            if not child.value:
+                self.report("empty-variable-value", node=child)

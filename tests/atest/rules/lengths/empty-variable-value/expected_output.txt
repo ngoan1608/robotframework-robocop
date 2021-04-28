@@ -1,0 +1,3 @@
+${rules_dir}${\}test.robot:3:0 [W] 0527 Variable without value. Use ${EMPTY} instead
+${rules_dir}${\}test.robot:4:0 [W] 0527 Variable without value. Use ${EMPTY} instead
+${rules_dir}${\}test.robot:8:0 [W] 0527 Variable without value. Use ${EMPTY} instead
