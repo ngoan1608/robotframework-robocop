@@ -8,7 +8,7 @@ from robot.api import Token
 try:
     from robot.api.parsing import KeywordCall
 except ImportError:
-    pass
+    from robot.parsing.model.statements import KeywordCall
 
 from robocop.checkers import VisitorChecker
 from robocop.rules import RuleSeverity
