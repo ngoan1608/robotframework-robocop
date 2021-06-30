@@ -12,7 +12,7 @@ except ImportError:
 
 from robocop.checkers import VisitorChecker
 from robocop.rules import RuleSeverity
-from robocop.utils import normalize_robot_name, IS_RF4, keyword_col
+from robocop.utils import normalize_robot_name, SUPPORTED_IF, keyword_col
 
 
 class InvalidCharactersInNameChecker(VisitorChecker):
@@ -202,7 +202,7 @@ class KeywordNamingChecker(VisitorChecker):
 
     def check_if_keyword_is_reserved(self, keyword_name, node):
         # if there is typo in syntax, it is interpreted as keyword
-        reserved = self.reserved_words_rf4 if IS_RF4 else self.reserved_words
+        reserved = self.reserved_words_rf4 if SUPPORTED_IF else self.reserved_words
         if keyword_name.lower() not in reserved:
             return False
         reserved_type = reserved[keyword_name.lower()]

@@ -11,7 +11,7 @@ from robot.libraries import STDLIBS
 
 from robocop.checkers import VisitorChecker
 from robocop.rules import RuleSeverity
-from robocop.utils import normalize_robot_name, IS_RF4, AssignmentTypeDetector, parse_assignment_sign_type
+from robocop.utils import normalize_robot_name, SUPPORTED_NESTED_FOR, SUPPORTED_IF, AssignmentTypeDetector, parse_assignment_sign_type
 
 
 class ReturnChecker(VisitorChecker):
@@ -89,7 +89,7 @@ class NestedForLoopsChecker(VisitorChecker):
 
     def __init__(self):
         super().__init__()
-        if IS_RF4:
+        if SUPPORTED_NESTED_FOR:
             self.disabled = True
 
     def visit_ForLoop(self, node):  # noqa
@@ -107,7 +107,7 @@ class IfBlockCanBeUsed(VisitorChecker):
     rules = {
         "0908": (
             "if-can-be-used",
-            "'%s' can be replaced with IF block since Robot Framework 4.0",
+            "'%s' can be replaced with IF block",
             RuleSeverity.INFO
         )
     }
@@ -115,7 +115,7 @@ class IfBlockCanBeUsed(VisitorChecker):
     def __init__(self):
         self.run_keyword_variants = {'runkeywordif', 'runkeywordunless'}
         super().__init__()
-        if not IS_RF4:
+        if not SUPPORTED_IF:
             self.disabled = True
 
     def visit_KeywordCall(self, node):  # noqa
