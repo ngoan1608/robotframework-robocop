@@ -2,7 +2,7 @@ import pytest
 from pathlib import Path
 import os
 from robocop.config import Config
-from robocop.utils import IS_RF4, DISABLED_IN_4, ENABLED_IN_4
+from robocop.utils import IS_RF4, DISABLED_IN_4, SUPPORTED_NESTED_FOR, SUPPORTED_IF, DISABLED_WITH_NESTED_FOR, ENABLED_WITH_IF
 
 
 def configure_robocop_with_rule(args, runner, rule, path):
@@ -52,7 +52,9 @@ def test_rule(rule, args, test_data, robocop_instance, capsys):
     robocop_instance = configure_robocop_with_rule(args, robocop_instance, rule, src)
     with pytest.raises(SystemExit) as system_exit:
         robocop_instance.run()
-    if (IS_RF4 and rule in DISABLED_IN_4) or (not IS_RF4 and rule in ENABLED_IN_4):
+    if ((IS_RF4 and rule in DISABLED_IN_4) or 
+        (SUPPORTED_NESTED_FOR and rule in DISABLED_WITH_NESTED_FOR) or 
+        (not SUPPORTED_IF and rule in ENABLED_WITH_IF)):
         assert system_exit.value.code == 0
     else:
         out, _ = capsys.readouterr()

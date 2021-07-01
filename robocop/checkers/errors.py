@@ -5,7 +5,6 @@ import re
 
 from robocop.checkers import VisitorChecker
 from robocop.rules import RuleSeverity
-from robocop.utils import IS_RF4
 
 
 class ParsingErrorChecker(VisitorChecker):
@@ -33,7 +32,7 @@ class ParsingErrorChecker(VisitorChecker):
     def handle_errors(self, node):  # noqa
         if node is None:
             return
-        if IS_RF4:
+        if hasattr(node, 'errors'):
             for error in node.errors:
                 self.report("parsing-error", error, node=node)
         else:

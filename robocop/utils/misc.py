@@ -18,8 +18,28 @@ from robocop.exceptions import InvalidExternalCheckerError
 
 
 IS_RF4 = VERSION.startswith('4')
-DISABLED_IN_4 = frozenset(('nested-for-loop', 'invalid-comment'))
-ENABLED_IN_4 = frozenset(('if-can-be-used', 'else-not-upper-case'))
+DISABLED_IN_4 = frozenset(('invalid-comment'))
+
+# IF/ELSE syntax and nested FOR are available from Robotframework 4 already.
+# Below verification is used for Robotframework 3 with ported IF/ELSE and 
+# nested FOR loop features
+
+# Check availability of NestedBlockLexer for Nested FOR Loop
+try:
+    from robot.parsing.lexer.blocklexers import NestedBlockLexer
+    SUPPORTED_NESTED_FOR = True
+except ImportError:
+    SUPPORTED_NESTED_FOR = IS_RF4
+
+# Check availability of IfLexer for IF/ELSE syntax
+try:
+    from robot.parsing.lexer.blocklexers import IfLexer
+    SUPPORTED_IF = True
+except ImportError:
+    SUPPORTED_IF = IS_RF4
+
+DISABLED_WITH_NESTED_FOR = frozenset(('nested-for-loop'))
+ENABLED_WITH_IF = frozenset(('if-can-be-used', 'else-not-upper-case'))
 
 
 def modules_in_current_dir(path, module_name):
